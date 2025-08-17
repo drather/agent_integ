@@ -1,0 +1,38 @@
+@startuml
+actor User
+participant "MCP (LLM Agent)" as MCP
+participant "RAG Service" as RAG
+participant "Ollama LLM" as LLM
+participant "WAS Service" as WAS
+database ChromaDB
+
+User -> MCP: "인프라 미들웨어 변경 내역을 참고해서 \n'월간 인프라팀 보고서 작성' 할 일을 추가해줘"
+
+activate MCP
+note right of MCP: 사용자 요청 분석 및 계획 수립
+MCP -> RAG: POST /ask {query: "인프라 미들웨어 변경 내역..."}
+activate RAG
+RAG -> ChromaDB: 문서 검색 (ChromaChromaDB)
+activate ChromaDB
+ChromaDB --> RAG: 검색된 문서 반환
+deactivate ChromaDB
+RAG -> LLM: 답변 생성 요청 (프롬프트 전달)
+activate LLM
+LLM --> RAG: 답변 반환
+deactivate LLM
+RAG --> MCP: 200 OK {answer: "..."}
+deactivate RAG
+
+note right of MCP: RAG 답변 기반으로 WAS 요청 데이터 생성
+MCP -> WAS: POST /api/tasks {content: "월간 인프라팀 보고서 작성 (근거: ...)"}
+activate WAS
+WAS -> ChromaDB: 할 일 저장 \n(db.json)
+activate ChromaDB
+ChromaDB --> WAS: 저장 확인
+deactivate ChromaDB
+WAS --> MCP: 201 Created {task_details}
+deactivate WAS
+
+MCP --> User: "할 일이 성공적으로 추가되었습니다."
+deactivate MCP
+@enduml
