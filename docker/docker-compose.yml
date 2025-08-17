@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  
+  
+
+  
+
+  # WAS Service (가상 시스템)
+  was:
+    build:
+      context: ../src/virtual_system/was
+      dockerfile: Dockerfile
+    container_name: agent_integ_was
+    volumes:
+      - ../src/virtual_system/was:/app
+      - ../data:/app/data
+    networks:
+      - agent_network
+
+  
+
+  # WEB Service (가상 시스템 - Nginx)
+  web:
+    build:
+      context: ../src/virtual_system/web
+      dockerfile: Dockerfile
+    container_name: agent_integ_web
+    ports:
+      - "80:80"
+    depends_on:
+      - was
+    networks:
+      - agent_network
+
+networks:
+  agent_network:
+    driver: bridge
